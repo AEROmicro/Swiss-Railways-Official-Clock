@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBB Clock - Perfect Alignment</title>
+    <style>
+        :root {
+            --sbb-red: #eb0000;
+            --sbb-black: #000000;
+            --clock-white: #ffffff;
+            --clock-size: 500px;
+            --hand-width: 26px; 
+        }
+
+        body {
+            background-color: #d1d1d1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .clock-face {
+            width: var(--clock-size);
+            height: var(--clock-size);
+            background-color: var(--clock-white);
+            border-radius: 50%;
+            position: relative;
+            /* Official White Rim Border */
+            border: 6px solid var(--clock-white);
+            outline: 1px solid rgba(0,0,0,0.1); /* Thin definition line */
+            box-sizing: border-box; 
+        }
+
+        /* Marker Container - Perfectly Centered */
+        .markers {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+
+        .marker {
+            position: absolute;
+            left: 50%;
+            background: var(--sbb-black);
+            /* This ensures rotation is exactly around the clock center */
+            transform-origin: 50% 244px; 
+        }
+
+        .marker.hour {
+            width: 18px; 
+            height: 55px;
+            margin-left: -9px;
+            top: 0px;
+        }
+
+        .marker.min {
+            width: 7px;
+            height: 18px;
+            margin-left: -3.5px;
+            top: 0px;
+        }
+
+        /* HANDS */
+        .hand {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            background: var(--sbb-black);
+        }
+
+        .hour-hand {
+            width: var(--hand-width);
+            height: 195px; 
+            margin-left: calc(var(--hand-width) / -2);
+            /* (height - tail) = 195 - 50 = 145px */
+            transform: translateY(-145px);
+            transform-origin: 50% 145px; 
+            z-index: 2;
+        }
+
+        .minute-hand {
+            width: var(--hand-width);
+            height: 285px; 
+            margin-left: calc(var(--hand-width) / -2);
+            /* (height - tail) = 285 - 55 = 230px */
+            transform: translateY(-230px);
+            transform-origin: 50% 230px;
+            z-index: 3;
+            transition: transform 0.2s cubic-bezier(0.4, 2.3, 0.6, 1);
+        }
+
+        .second-hand {
+            width: 6px;
+            height: 250px; 
+            margin-left: -3px;
+            background: var(--sbb-red);
+            /* (height - tail) = 250 - 65 = 185px */
+            transform: translateY(-185px);
+            transform-origin: 50% 185px;
+            z-index: 4;
+        }
+
+        /* Red Disc Alignment */
+        .second-hand::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 48px;
+            height: 48px;
+            background: var(--sbb-red);
+            border-radius: 50%;
+            transform: translate(-50%, -24px); 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="clock-face">
+        <div class="markers" id="markers"></div>
+        <div class="hand hour-hand" id="hourHand"></div>
+        <div class="hand minute-hand" id="minHand"></div>
+        <div class="hand second-hand" id="secHand"></div>
+    </div>
+
+    <script>
+        const markersContainer = document.getElementById('markers');
+        const clockSize = 500;
+        const radius = (clockSize / 2) - 6; // Accounts for border
+
+        for (let i = 0; i < 60; i++) {
+            const marker = document.createElement('div');
+            marker.className = (i % 5 === 0) ? 'marker hour' : 'marker min';
+            marker.style.transform = `rotate(${i * 6}deg)`;
+            // Explicitly set transform origin to the center of the face
+            marker.style.transformOrigin = `50% ${radius}px`;
+            markersContainer.appendChild(marker);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const ms = now.getMilliseconds();
+            const sec = now.getSeconds();
+            const min = now.getMinutes();
+            const hr = now.getHours();
+
+            const totalMs = (sec * 1000) + ms;
+            let secDeg = totalMs < 58500 ? (totalMs / 58500) * 360 : 0;
+            const minDeg = min * 6;
+            const hrDeg = (hr % 12 * 30) + (min * 0.5);
+
+            // Using combined transforms to keep alignment perfect
+            document.getElementById('secHand').style.transform = `translateY(-185px) rotate(${secDeg}deg)`;
+            document.getElementById('minHand').style.transform = `translateY(-230px) rotate(${minDeg}deg)`;
+            document.getElementById('hourHand').style.transform = `translateY(-145px) rotate(${hrDeg}deg)`;
+
+            requestAnimationFrame(updateClock);
+        }
+
+        updateClock();
+    </script>
+</body>
+</html>
